@@ -27,7 +27,7 @@ var (
 	defaultCommissionRate          = "0.1"
 	defaultCommissionMaxRate       = "0.2"
 	defaultCommissionMaxChangeRate = "0.01"
-	defaultMinSelfDelegation       = "1"
+	defaultMinSelfDelegation       = "0"
 )
 
 // NewTxCmd returns a root CLI command handler for all x/staking transaction commands.
