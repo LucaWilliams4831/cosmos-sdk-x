@@ -128,7 +128,8 @@ func NewEditValidatorCmd() *cobra.Command {
 			if minSelfDelegationString != "" {
 				msb, ok := sdk.NewIntFromString(minSelfDelegationString)
 				if !ok {
-					return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "minimum self delegation must be a positive integer")
+					// return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "minimum self delegation must be a positive integer")
+					fmt.Println("*************", ok , "**************")
 				}
 
 				newMinSelfDelegation = &msb
@@ -382,7 +383,7 @@ func newBuildCreateValidatorMsg(clientCtx client.Context, txf tx.Factory, fs *fl
 
 	minSelfDelegation, ok := sdk.NewIntFromString(msbStr)
 	if !ok {
-		return txf, nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "minimum self delegation must be a positive integer")
+		fmt.Println("*************", ok , "**************")
 	}
 
 	msg, err := types.NewMsgCreateValidator(
@@ -583,7 +584,7 @@ func BuildCreateValidatorMsg(clientCtx client.Context, config TxCreateValidatorC
 	minSelfDelegation, ok := sdk.NewIntFromString(msbStr)
 
 	if !ok {
-		return txBldr, nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "minimum self delegation must be a positive integer")
+		fmt.Println("*************", ok , "**************")
 	}
 
 	msg, err := types.NewMsgCreateValidator(
