@@ -127,7 +127,7 @@ func (msg MsgCreateValidator) ValidateBasic() error {
 	if msg.Value.Amount.LT(msg.MinSelfDelegation) {
 		return ErrSelfDelegationBelowMinimum
 	}
-	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "**************** create valdiator failed because of not enough burned token ****************")
+	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, " create valdiator failed because of not enough burned token")
 	// return nil
 }
 
@@ -183,7 +183,7 @@ func (msg MsgEditValidator) ValidateBasic() error {
 			return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "commission rate must be between 0 and 1 (inclusive)")
 		}
 	}
-	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "************ edit validator deposit amount is less than 0.1M X token ***************")
+	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "edit validator deposit amount is less than 0.1M X token ")
 	// return nil
 }
 
