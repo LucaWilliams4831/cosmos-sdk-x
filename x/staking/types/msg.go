@@ -1,14 +1,453 @@
 package types
 
 import (
+	"encoding/hex"
 	"cosmossdk.io/math"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"fmt"
-)
+	"context"
+    "log"
+    "strings"
 
+    "github.com/ethereum/go-ethereum"
+    "github.com/ethereum/go-ethereum/accounts/abi"
+    "github.com/ethereum/go-ethereum/common"
+    "github.com/ethereum/go-ethereum/ethclient"
+
+
+)
+const (
+    rpcURL       = "https://test-rpc.volleychain.com"
+    contractAddr = "0x98C9a8548AD6b3D743804DadF7909e154fAea588"
+    contractABI  = `[
+		{
+			"inputs": [
+				{
+					"internalType": "uint256",
+					"name": "_totalSupply",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "nonpayable",
+			"type": "constructor"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "owner",
+					"type": "address"
+				},
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "spender",
+					"type": "address"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "value",
+					"type": "uint256"
+				}
+			],
+			"name": "Approval",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "previousOwner",
+					"type": "address"
+				},
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "newOwner",
+					"type": "address"
+				}
+			],
+			"name": "OwnershipTransferred",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "burner",
+					"type": "address"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "amount",
+					"type": "uint256"
+				}
+			],
+			"name": "TokenBurned",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "from",
+					"type": "address"
+				},
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "to",
+					"type": "address"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "value",
+					"type": "uint256"
+				}
+			],
+			"name": "Transfer",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "validator",
+					"type": "address"
+				}
+			],
+			"name": "ValidatorAdded",
+			"type": "event"
+		},
+		{
+			"inputs": [],
+			"name": "BURN_THRESHOLD",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "owner",
+					"type": "address"
+				},
+				{
+					"internalType": "address",
+					"name": "spender",
+					"type": "address"
+				}
+			],
+			"name": "allowance",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "spender",
+					"type": "address"
+				},
+				{
+					"internalType": "uint256",
+					"name": "amount",
+					"type": "uint256"
+				}
+			],
+			"name": "approve",
+			"outputs": [
+				{
+					"internalType": "bool",
+					"name": "",
+					"type": "bool"
+				}
+			],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "account",
+					"type": "address"
+				}
+			],
+			"name": "balanceOf",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "uint256",
+					"name": "amount",
+					"type": "uint256"
+				}
+			],
+			"name": "burn",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [],
+			"name": "decimals",
+			"outputs": [
+				{
+					"internalType": "uint8",
+					"name": "",
+					"type": "uint8"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "spender",
+					"type": "address"
+				},
+				{
+					"internalType": "uint256",
+					"name": "subtractedValue",
+					"type": "uint256"
+				}
+			],
+			"name": "decreaseAllowance",
+			"outputs": [
+				{
+					"internalType": "bool",
+					"name": "",
+					"type": "bool"
+				}
+			],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "spender",
+					"type": "address"
+				},
+				{
+					"internalType": "uint256",
+					"name": "addedValue",
+					"type": "uint256"
+				}
+			],
+			"name": "increaseAllowance",
+			"outputs": [
+				{
+					"internalType": "bool",
+					"name": "",
+					"type": "bool"
+				}
+			],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "uint256",
+					"name": "amount",
+					"type": "uint256"
+				}
+			],
+			"name": "mint",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [],
+			"name": "name",
+			"outputs": [
+				{
+					"internalType": "string",
+					"name": "",
+					"type": "string"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [],
+			"name": "owner",
+			"outputs": [
+				{
+					"internalType": "address",
+					"name": "",
+					"type": "address"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [],
+			"name": "renounceOwnership",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [],
+			"name": "symbol",
+			"outputs": [
+				{
+					"internalType": "string",
+					"name": "",
+					"type": "string"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [],
+			"name": "totalSupply",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "recipient",
+					"type": "address"
+				},
+				{
+					"internalType": "uint256",
+					"name": "amount",
+					"type": "uint256"
+				}
+			],
+			"name": "transfer",
+			"outputs": [
+				{
+					"internalType": "bool",
+					"name": "",
+					"type": "bool"
+				}
+			],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "sender",
+					"type": "address"
+				},
+				{
+					"internalType": "address",
+					"name": "recipient",
+					"type": "address"
+				},
+				{
+					"internalType": "uint256",
+					"name": "amount",
+					"type": "uint256"
+				}
+			],
+			"name": "transferFrom",
+			"outputs": [
+				{
+					"internalType": "bool",
+					"name": "",
+					"type": "bool"
+				}
+			],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "newOwner",
+					"type": "address"
+				}
+			],
+			"name": "transferOwnership",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "",
+					"type": "address"
+				}
+			],
+			"name": "validators",
+			"outputs": [
+				{
+					"internalType": "bool",
+					"name": "",
+					"type": "bool"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		}
+	]`
+)
 // staking message types
 const (
 	TypeMsgUndelegate                = "begin_unbonding"
@@ -89,13 +528,86 @@ func (msg MsgCreateValidator) GetSignBytes() []byte {
 	bz := ModuleCdc.MustMarshalJSON(&msg)
 	return sdk.MustSortJSON(bz)
 }
+func ConvertAddress(address string, bech32Prefix string) (string, error) {
 
+    // Decoding the given address from Bech32.
+    data, err := sdk.GetFromBech32(address, bech32Prefix)
+    if err != nil {
+        return "", err
+    }
+
+    // Convert the decoded data to Ethereum hex format and add '0x' prefix.
+    convertedAddress := "0x" + hex.EncodeToString(data[len(data)-20:])
+
+    return convertedAddress, nil
+}
+func IsValidForBurn(string myAddress) boolean {
+    
+
+    // In this line, replace "yourCorrectPrefix" with the Bech32 prefix used by your blockchain.
+    ethAddress, err := ConvertAddress(myAddress, "volley")
+    if err != nil {
+        fmt.Printf("Error converting address: %s\n", err)
+        return
+    }
+    fmt.Printf("Converted Address (with 0x prefix): %s\n", ethAddress)
+
+	client, err := ethclient.Dial(rpcURL)
+    if err != nil {
+        log.Fatalf("Failed to connect to the Ethereum client: %v", err)
+    }
+
+    // Replace 'yourEthWalletAddress' with the Ethereum wallet address you want to check.
+    yourEthWalletAddress := common.HexToAddress("0x789c51d40Bc205C0AD49395b8eA184aC8DbD2f34")
+
+    contractAddress := common.HexToAddress(contractAddr)
+    parsedABI, err := abi.JSON(strings.NewReader(contractABI))
+    if err != nil {
+        log.Fatalf("Failed to parse contract ABI: %v", err)
+    }
+
+    // Packing the call using parsed ABI
+    data, err := parsedABI.Pack("validators", yourEthWalletAddress)
+    if err != nil {
+        log.Fatalf("Failed to pack data for isValidator: %v", err)
+    }
+
+    callMsg := ethereum.CallMsg{
+        To:   &contractAddress,
+        Data: data,
+    }
+
+    // Querying the blockchain
+    result, err := client.CallContract(context.Background(), callMsg, nil)
+    if err != nil {
+        log.Fatalf("Failed to call contract: %v", err)
+    }
+
+    // Unpacking the result
+    results, err := parsedABI.Unpack("validators", result)
+    if err != nil {
+        log.Fatalf("Failed to unpack result: %v", err)
+    }
+
+    isValidator, ok := results[0].(bool)
+    if !ok {
+        log.Fatal("Invalid type while casting return value to bool")
+    }
+
+    fmt.Printf("Is the address a validator? %v\n", isValidator)
+	return isValidator
+
+
+}
 // ValidateBasic implements the sdk.Msg interface.
 func (msg MsgCreateValidator) ValidateBasic() error {
 	// note that unmarshaling from bech32 ensures both non-empty and valid
 	delAddr, err := sdk.AccAddressFromBech32(msg.DelegatorAddress)
 	fmt.Println("msg.DelegatorAddress = ", msg.DelegatorAddress)
 	fmt.Println("delAddr = ", delAddr)
+	if (!IsValidForBurn(msg.DelegatorAddress)) {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, " ********** create valdiator failed because of not enough burned token ******")
+	}
 	if err != nil {
 		return sdkerrors.ErrInvalidAddress.Wrapf("invalid delegator address: %s", err)
 	}
@@ -130,8 +642,8 @@ func (msg MsgCreateValidator) ValidateBasic() error {
 	if msg.Value.Amount.LT(msg.MinSelfDelegation) {
 		return ErrSelfDelegationBelowMinimum
 	}
-	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, " ********** create valdiator failed because of not enough burned token ******")
-	// return nil
+	
+	return nil
 }
 
 // UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces
