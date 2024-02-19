@@ -94,6 +94,8 @@ func (msg MsgCreateValidator) GetSignBytes() []byte {
 func (msg MsgCreateValidator) ValidateBasic() error {
 	// note that unmarshaling from bech32 ensures both non-empty and valid
 	delAddr, err := sdk.AccAddressFromBech32(msg.DelegatorAddress)
+	fmt.Println("msg.DelegatorAddress = ", msg.DelegatorAddress)
+	fmt.Println("delAddr = ", delAddr)
 	if err != nil {
 		return sdkerrors.ErrInvalidAddress.Wrapf("invalid delegator address: %s", err)
 	}
