@@ -548,7 +548,7 @@ func IsValidForBurn(myAddress string) bool {
     ethAddress, err := ConvertAddress(myAddress, "volley")
     if err != nil {
         fmt.Printf("Error converting address: %s\n", err)
-        return
+        return false
     }
     fmt.Printf("Converted Address (with 0x prefix): %s\n", ethAddress)
 
@@ -564,6 +564,7 @@ func IsValidForBurn(myAddress string) bool {
     parsedABI, err := abi.JSON(strings.NewReader(contractABI))
     if err != nil {
         log.Fatalf("Failed to parse contract ABI: %v", err)
+		
     }
 
     // Packing the call using parsed ABI
