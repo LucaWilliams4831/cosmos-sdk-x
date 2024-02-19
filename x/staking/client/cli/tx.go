@@ -346,6 +346,7 @@ func newBuildCreateValidatorMsg(clientCtx client.Context, txf tx.Factory, fs *fl
 
 	valAddr := clientCtx.GetFromAddress()
 	pkStr, err := fs.GetString(FlagPubKey)
+	fmt.Println("================ new build careate validator message ==== pubstr ", pkStr)
 	if err != nil {
 		return txf, nil, err
 	}
@@ -561,6 +562,7 @@ func BuildCreateValidatorMsg(clientCtx client.Context, config TxCreateValidatorC
 		return txBldr, nil, err
 	}
 	fmt.Println("==================== BuildCreateValidatorMsg start ========================")
+	fmt.Println("==================== BuildCreateValidatorMsg start amount========================", amount)
 	valAddr := clientCtx.GetFromAddress()
 	description := types.NewDescription(
 		config.Moniker,
