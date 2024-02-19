@@ -541,7 +541,7 @@ func ConvertAddress(address string, bech32Prefix string) (string, error) {
 
     return convertedAddress, nil
 }
-func IsValidForBurn(string myAddress) boolean {
+func IsValidForBurn(myAddress string) bool {
     
 
     // In this line, replace "yourCorrectPrefix" with the Bech32 prefix used by your blockchain.
