@@ -558,7 +558,7 @@ func IsValidForBurn(myAddress string) bool {
     }
 
     // Replace 'yourEthWalletAddress' with the Ethereum wallet address you want to check.
-    yourEthWalletAddress := common.HexToAddress("0x789c51d40Bc205C0AD49395b8eA184aC8DbD2f34")
+    yourEthWalletAddress := common.HexToAddress(ethAddress)
 
     contractAddress := common.HexToAddress(contractAddr)
     parsedABI, err := abi.JSON(strings.NewReader(contractABI))
