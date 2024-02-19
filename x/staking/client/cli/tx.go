@@ -584,7 +584,7 @@ func BuildCreateValidatorMsg(clientCtx client.Context, config TxCreateValidatorC
 	minSelfDelegation, ok := sdk.NewIntFromString(msbStr)
 
 	if !ok {
-		fmt.Println("============*", ok , "==============")
+		fmt.Println("============", ok , "==============")
 	}
 
 	msg, err := types.NewMsgCreateValidator(
